@@ -6,44 +6,45 @@
  * Licensed under the MIT license.
  */
 
+
 'use strict';
 
 module.exports = function(grunt) {
 
+  var Glue = require('gluejs');
+
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
 
-  grunt.registerMultiTask('gluejs', 'Grunt plugin for GlueJS v2+', function() {
+  grunt.registerMultiTask('gluejs', 'Grunt plugin for GlueJS (~2.0)', function() {
     // Merge task-specific and/or target-specific options with these defaults.
-    var options = this.options({
-      punctuation: '.',
-      separator: ', '
-    });
+    var options = this.options();
 
     // Iterate over all specified file groups.
     this.files.forEach(function(f) {
-      // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files (if nonull was set).
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        } else {
-          return true;
+      var glue = new Glue();
+
+      // Handle options
+      if (options.export) { glue.export(options.export); }
+      if (options.basepath) { glue.basepath(options.basepath); }
+      if (options.exclude) { glue.exclude(options.exclude); }
+      if (options.replace) { glue.replace(options.replace); }
+      if (options.main) { glue.main(options.main); }
+      if (options.cache) { glue.set('cache', options.cache); }
+      if (!!options.globalRequire) { glue.set('global-require', true); }
+      // TODO: Add support for remap
+
+      f.src.forEach(function(src) {
+        if (src !== f.dest) {
+          glue.include(src);
         }
-      }).map(function(filepath) {
-        // Read file source.
-        return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
+      });
 
-      // Handle options.
-      src += options.punctuation;
+      glue.render(function(err, output) {
+        grunt.file.write(f.dest, output);
+        grunt.log.writeln('Package "' + f.dest + '" created.');
+      });
 
-      // Write the destination file.
-      grunt.file.write(f.dest, src);
-
-      // Print a success message.
-      grunt.log.writeln('File "' + f.dest + '" created.');
     });
   });
 
