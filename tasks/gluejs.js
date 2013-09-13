@@ -18,7 +18,9 @@ module.exports = function(grunt) {
 
   grunt.registerMultiTask('gluejs', 'Grunt plugin for GlueJS (~2.0)', function() {
     // Merge task-specific and/or target-specific options with these defaults.
-    var options = this.options();
+    var options = this.options({
+      main: 'index.js'
+    });
 
     // Iterate over all specified file groups.
     this.files.forEach(function(f) {
