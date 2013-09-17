@@ -11,16 +11,18 @@
 
 module.exports = function(grunt) {
 
-  var Glue = require('gluejs');
+  var Glue = require('gluejs'),
+      fs   = require('fs'),
+      path = require('path');
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
 
   grunt.registerMultiTask('gluejs', 'Grunt plugin for GlueJS (~2.0)', function() {
     // Merge task-specific and/or target-specific options with these defaults.
-    var options = this.options({
-      main: 'index.js'
-    });
+    var options = this.options(),
+        done    = this.async(),
+        base    = process.cwd();
 
     // Iterate over all specified file groups.
     this.files.forEach(function(f) {
@@ -28,7 +30,12 @@ module.exports = function(grunt) {
 
       // Handle options
       if (options.export) { glue.export(options.export); }
-      if (options.basepath) { glue.basepath(options.basepath); }
+      if (options.basepath) {
+        glue.basepath(options.basepath);
+        // We need to tell GlueJS to work from the basepath dir., not from Gruntfile dir.
+        grunt.file.setBase(path.resolve(options.basepath));
+      }
+      // if (options.include) { glue.include(options.include); }
       if (options.exclude) { glue.exclude(options.exclude); }
       if (options.replace) { glue.replace(options.replace); }
       if (options.main) { glue.main(options.main); }
@@ -42,9 +49,20 @@ module.exports = function(grunt) {
         }
       });
 
+      // Reinstate the original working directory, if it was changed for basepath
+      if (options.basepath) { grunt.file.setBase(base); }
+
+      grunt.log.write('Glueing ' + f.dest + '...');
+
       glue.render(function(err, output) {
-        grunt.file.write(f.dest, output);
-        grunt.log.writeln('Package "' + f.dest + '" created.');
+        if (err) {
+          grunt.log.error();
+          done(false);
+        } else {
+          grunt.file.write(f.dest, output);
+          grunt.log.ok();
+          done();
+        }
       });
 
     });
