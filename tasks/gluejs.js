@@ -57,9 +57,11 @@ module.exports = function(grunt) {
       glue.render(function(err, output) {
         if (err) {
           grunt.log.error();
+          grunt.event.emit('gluejs.fail');
           done(false);
         } else {
           grunt.file.write(f.dest, output);
+          grunt.event.emit('gluejs.done');
           grunt.log.ok();
           done();
         }
