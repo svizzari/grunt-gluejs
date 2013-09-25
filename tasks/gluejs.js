@@ -11,7 +11,8 @@
 
 module.exports = function(grunt) {
 
-  var Glue = require('gluejs'),
+  var _    = grunt.util._,
+      Glue = require('gluejs'),
       fs   = require('fs'),
       path = require('path');
 
@@ -19,7 +20,7 @@ module.exports = function(grunt) {
   // creation: http://gruntjs.com/creating-tasks
 
   grunt.registerMultiTask('gluejs', 'Grunt plugin for GlueJS (~2.0)', function() {
-    // Merge task-specific and/or target-specific options with these defaults.
+
     var options = this.options(),
         done    = this.async(),
         base    = process.cwd();
@@ -41,7 +42,17 @@ module.exports = function(grunt) {
       if (options.main) { glue.main(options.main); }
       if (options.cache) { glue.set('cache', options.cache); }
       if (!!options.globalRequire) { glue.set('global-require', true); }
-      // TODO: Add support for remap
+      if (options.remap) {
+        if ('object' !== grunt.util.typeOf(options.remap)) {
+          grunt.log.error('remap options should be provided as an Object ' +
+                          'where key is the module being mapped and value ' +
+                          'is a module name or expression');
+        } else {
+          Object.keys(options.remap).forEach(function(key) {
+            glue.remap(key, options.remap[key]);
+          });
+        }
+      }
 
       f.src.forEach(function(src) {
         if (src !== f.dest) {
